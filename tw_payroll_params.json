@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "parameters": [
+    {"code": "nhi_supplement_rate", "effective_date": "2021-01-01", "value": 2.11, "note": "二代健保補充保費費率"},
+    {"code": "nhi_basic_wage", "effective_date": "2025-01-01", "value": 28590, "note": "基本工資 2025"},
+    {"code": "nhi_basic_wage", "effective_date": "2026-01-01", "value": 29500, "note": "基本工資 2026"},
+    {"code": "nhi_supplement_cap", "effective_date": "2021-01-01", "value": 10000000, "note": "單次給付上限"},
+    {"code": "nhi_general_rate", "effective_date": "2021-01-01", "value": 5.17, "note": "一般保險費率"},
+    {"code": "nhi_employee_share", "effective_date": "2021-01-01", "value": 30, "note": "民營公司員工負擔比率"},
+    {"code": "nhi_max_dependents", "effective_date": "2021-01-01", "value": 3, "note": "眷屬最多計 3 人"}
+  ]
+}
