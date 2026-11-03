@@ -1,57 +1,58 @@
-# 攲器薪資計算－法規參數（GitHub 參數庫範本）
+# odoo-tw-payroll-params：台灣薪資法規參數
 
-給 Odoo 模組 `unipiece_payroll_timesheet`（攲器薪資計算-工時制）使用的「政府法規參數」檔。
-Odoo 裡按「從 GitHub 更新」，就會下載本程式庫的 `tw_payroll_params.json`，預覽差異後再套用。
+攲器有限公司（UniPiece）　https://www.unipiece.com.tw
 
-## 一、第一次建立（在 GitHub 網站上做）
+Odoo 18 模組 **`unipiece_payroll_timesheet`（攲器薪資計算-工時制）** 使用的台灣法規參數：二代健保補充保費費率、基本工資、一般健保費率等。
 
-1. 登入 GitHub →右上角 `+` → **New repository**。
-2. Repository name 填 `<程式庫名稱>`（例：`tw-payroll-params`）。
-3. **建議選 Public**（Odoo 才能不帶密碼下載；私有程式庫下載會得到 404）。檔案內只有費率與基本工資，沒有機密。
-4. 建立後，把本資料夾的所有檔案上傳（`tw_payroll_params.json`、`tools/`、`.github/`、`README.md`、`.gitignore`）。
-5. 在 Odoo 的「設定 → 技術 → 系統參數」把 `unipiece_payroll_timesheet.regulation_url` 改成：
-   `https://raw.githubusercontent.com/<擁有者>/<程式庫名稱>/main/tw_payroll_params.json`
-   ✅ 預期：在瀏覽器貼上這個網址，看得到 JSON 文字。
+模組使用者在 Odoo 按【從 GitHub 更新】，會下載本程式庫的 `tw_payroll_params.json`，先顯示與目前數值的差異預覽，**經薪資管理員確認後才寫入**。不會自動更新。
 
-## 二、檔案格式
+> 數值依健保署、勞動部公告整理，**不是法律或財務意見**，異動時請對照官方公告確認。
+
+## 模組如何使用這些參數
+
+- 每筆參數都有「生效日」。薪資單依**發放日**取用當天已生效的最新一筆，所以法規異動後，已結算的舊薪資單重算不會變。
+- 預覽表會標示每筆是「新增」、「變更」、「與手動輸入的數值不同」或「相同」。與手動輸入不同的預設不勾選，避免蓋掉人工修改。
+- 下載內容只當 JSON 解析，並逐筆驗證代碼、日期與數值範圍；超出範圍或格式不符，整批拒絕。
+- 只接受 `https://raw.githubusercontent.com/…….json` 網址，驗證 TLS 憑證，不跟隨轉址，逾時與大小有上限。
+- 若在 Odoo 設定了公開金鑰，必須附上正確的 Ed25519 簽章（`tw_payroll_params.json.sig`），否則整批拒絕。
+
+## 檔案格式
 
 ```json
-{"schema_version": 1,
- "parameters": [
-   {"code": "nhi_basic_wage", "effective_date": "2027-01-01", "value": 30000, "note": "基本工資 2027"}
- ]}
+{
+  "schema_version": 1,
+  "parameters": [
+    {"code": "nhi_basic_wage", "effective_date": "2027-01-01", "value": 30000, "note": "基本工資 2027"}
+  ]
+}
 ```
 
-- `code` 只能是：`nhi_supplement_rate`（補充保費費率 %）、`nhi_basic_wage`（基本工資）、`nhi_supplement_cap`（單次給付上限）、`nhi_general_rate`（一般保險費率 %）、`nhi_employee_share`（員工負擔 %）、`nhi_max_dependents`（眷屬計算上限）。
-- `effective_date` 為 `YYYY-MM-DD`，薪資單依「發放日」取該日已生效的最新值。
-- **新增法規變動時請「加一筆新生效日」，不要改舊的**，舊薪資單重算才不會變。
-- 同一個 `code` + `effective_date` 不可重複；數值超出合理範圍（例：費率 > 10）Odoo 會直接拒絕。
+| `code` | 意義 | 允許範圍 |
+|---|---|---|
+| `nhi_supplement_rate` | 二代健保補充保費費率（%） | 0 ～ 10 |
+| `nhi_basic_wage` | 基本工資（兼職薪資扣取門檻） | 0 ～ 100,000 |
+| `nhi_supplement_cap` | 補充保費單次給付上限（0＝不設上限） | 0 ～ 1,000,000,000 |
+| `nhi_general_rate` | 一般健保費率（%） | 0 ～ 15 |
+| `nhi_employee_share` | 員工負擔一般健保費比率（%） | 0 ～ 100 |
+| `nhi_max_dependents` | 眷屬計算人數上限 | 0 ～ 10 |
 
-## 三、更新參數的流程
+- `schema_version` 固定為 `1`；`effective_date` 格式 `YYYY-MM-DD`；`note` 選填，200 字以內。
+- 同一個 `code` ＋ 同一個 `effective_date` 不可重複。
+- **法規異動時新增一筆新的生效日，不要改舊的那筆。**
 
-1. 編輯 `tw_payroll_params.json`（GitHub 網頁上按鉛筆圖示即可）。
-2. 在自己電腦執行檢查：`python3 tools/sign.py check tw_payroll_params.json` ✅ 預期 `OK: N parameters`。
-3. （建議）簽章，見下節。
-4. Commit。GitHub Actions 會自動再檢查一次（`.github/workflows/validate.yml`）。
+## 更新參數
 
-## 四、簽章（強烈建議）
+1. 編輯 `tw_payroll_params.json`，在 `parameters` 末尾新增一筆。
+2. 檢查格式：`python3 tools/sign.py check tw_payroll_params.json`（預期 `OK: N parameters`）。
+3. 若有啟用簽章：`python3 tools/sign.py sign tw_payroll_params.json private.key`，將產生的 `.sig` 與 JSON 一起 commit。
+4. Commit 後，GitHub Actions（`.github/workflows/validate.yml`）會自動再檢查一次。
 
-沒有簽章時，Odoo 只靠「GitHub 帳號沒被盜」保護這個檔。有簽章時，即使帳號被盜，沒有私鑰也無法讓 Odoo 接受竄改後的檔案。
+## 簽章
 
 ```bash
 pip install cryptography
-python3 tools/sign.py keygen        # 產生 private.key，畫面印出「公開金鑰」
+python3 tools/sign.py keygen    # 產生 private.key（私鑰）並印出公開金鑰
 ```
-1. `private.key` 是**私鑰，絕不可上傳 GitHub**（已列入 `.gitignore`），請存在密碼管理員或離線處。
-2. 把印出的公開金鑰貼到 Odoo「系統參數」`unipiece_payroll_timesheet.regulation_public_key`。
-3. 每次改完 JSON：`python3 tools/sign.py sign tw_payroll_params.json private.key`，
-   會產生 `tw_payroll_params.json.sig`，**兩個檔案一起 commit**。
-4. 只要填了公開金鑰，Odoo 就**強制**要求簽章；簽章不符會拒絕更新。
 
-## 五、保護分支（建議）
-
-GitHub → Settings → Branches → Add rule（`main`）→ 勾選 *Require a pull request before merging*，並開啟帳號兩步驟驗證（2FA）。
-
-## 六、這個範本沒有實際驗證的部分
-
-數值取自作者整理的公開資料，**發佈前請對照健保署／勞動部公告再確認**。
+- `private.key` 是私鑰，**不可上傳 GitHub**（`.gitignore` 已排除 `*.key`），請另行妥善保管。
+- 公開金鑰填入 Odoo 系統參數 `unipiece_payroll_timesheet.regulation_public_key`。
