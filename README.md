@@ -44,15 +44,5 @@ Odoo 18 模組 **`unipiece_payroll_timesheet`（攲器薪資計算-工時制）*
 
 1. 編輯 `tw_payroll_params.json`，在 `parameters` 末尾新增一筆。
 2. 檢查格式：`python3 tools/sign.py check tw_payroll_params.json`（預期 `OK: N parameters`）。
-3. 若有啟用簽章：`python3 tools/sign.py sign tw_payroll_params.json private.key`，將產生的 `.sig` 與 JSON 一起 commit。
+3. 若已啟用簽章，須重新簽章，並將 `tw_payroll_params.json.sig` 與 JSON 一起 commit。
 4. Commit 後，GitHub Actions（`.github/workflows/validate.yml`）會自動再檢查一次。
-
-## 簽章
-
-```bash
-pip install cryptography
-python3 tools/sign.py keygen    # 產生 private.key（私鑰）並印出公開金鑰
-```
-
-- `private.key` 是私鑰，**不可上傳 GitHub**（`.gitignore` 已排除 `*.key`），請另行妥善保管。
-- 公開金鑰填入 Odoo 系統參數 `unipiece_payroll_timesheet.regulation_public_key`。
